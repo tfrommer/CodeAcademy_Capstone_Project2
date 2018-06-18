@@ -1,0 +1,178 @@
+
+
+---> Table data layouts: slide 4
+
+SELECT * 
+ FROM survey
+ LIMIT 5;
+
+SELECT *
+FROM quiz
+LIMIT 5;
+
+SELECT * 
+FROM home_try_on
+LIMIT 5;
+
+SELECT *
+FROM purchase
+LIMIT 5;
+
+--> Survey quiz fallout: slide 5
+
+ SELECT question, COUNT(user_id)
+ FROM survey
+ GROUP BY question;
+
+--> Quiz table data: slide 6
+
+SELECT style, COUNT (user_id) AS 'count style'
+FROM quiz
+GROUP BY 1
+ORDER BY 2 DESC;
+
+SELECT fit, COUNT (user_id) AS 'count fit'
+FROM quiz
+GROUP BY 1
+ORDER BY 2 DESC; 
+
+SELECT color, COUNT (user_id) AS 'count color'
+FROM quiz
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+--> Quiz to home try-on to purchase conversion: slide 7
+
+SELECT DISTINCT COUNT (user_id) AS 'took_quiz'
+FROM quiz;
+
+WITH browse AS (
+  SELECT DISTINCT q.user_id,
+   h.user_id IS NOT NULL AS 'is_home_try_on',
+   h.number_of_pairs,
+   p.user_id IS NOT NULL AS 'is_purchase'
+FROM quiz q
+LEFT JOIN home_try_on h
+   ON q.user_id = h.user_id
+LEFT JOIN purchase p
+   ON p.user_id = q.user_id)
+ 
+ SELECT 
+ COUNT (CASE WHEN is_home_try_on = 1
+        THEN user_id
+        ELSE NULL 
+        END)
+				AS 'tried_on',
+  COUNT (CASE WHEN is_purchase = 1
+        THEN user_id
+        ELSE NULL
+        END) 
+        AS 'purchased'
+        FROM browse;
+
+
+--> Purchase conversion by number of sample pairs sent home: slide 8
+
+ WITH browse AS (
+  SELECT DISTINCT q.user_id,
+   h.user_id IS NOT NULL AS 'is_home_try_on',
+   h.number_of_pairs,
+   p.user_id IS NOT NULL AS 'is_purchase'
+FROM quiz q
+LEFT JOIN home_try_on h
+   ON q.user_id = h.user_id
+LEFT JOIN purchase p
+   ON p.user_id = q.user_id)
+ 
+SELECT 
+ COUNT (CASE WHEN number_of_pairs = '3 pairs'
+        THEN user_id
+        ELSE NULL 
+        END)
+				AS '3_pairs',
+  COUNT (CASE WHEN number_of_pairs = '5 pairs'
+        THEN user_id
+        ELSE NULL
+        END) 
+        AS '5_pairs',
+   COUNT (CASE WHEN is_purchase = 1
+          THEN user_id
+          ELSE NULL
+          END)
+        AS 'bought'
+        FROM browse
+  GROUP BY number_of_pairs;
+
+
+--> Purchase table queries: slides 9, 10
+SELECT style, COUNT (user_id) AS 'count style'
+FROM purchase
+GROUP BY 1
+ORDER BY 2 DESC;
+
+SELECT price, COUNT (user_id) AS 'count price'
+FROM purchase
+GROUP BY 1
+ORDER BY 2 DESC;
+
+WITH aggregate AS (
+  SELECT  model_name, color, style, COUNT (user_id) AS units, price
+	FROM purchase
+	GROUP BY 1, 2)
+  
+  SELECT model_name, SUM(units)
+  FROM aggregate
+  GROUP BY 1
+  ORDER BY 2 DESC;
+  
+  WITH aggregate AS (
+  SELECT  model_name, color, style, COUNT (user_id) AS units, price
+	FROM purchase
+	GROUP BY 1, 2)
+  
+  SELECT color, SUM(units)
+  FROM aggregate
+  GROUP BY 1
+  ORDER BY 2 DESC;
+
+--> None More Black: slide 11
+SELECT DISTINCT COUNT(user_id)
+FROM quiz;
+
+SELECT color, COUNT(user_id)
+FROM quiz
+GROUP BY 1
+ORDER BY 2 DESC;
+
+SELECT 1.0 * 280. / 1000;
+
+WITH black AS (
+  SELECT quiz.user_id, 
+	quiz.color AS 'quiz_color',
+   	purchase.color AS 'purchase_color'
+    FROM quiz
+   LEFT JOIN purchase
+   ON quiz.user_id = purchase.user_id
+   	WHERE quiz.color IS 'Black'
+   	AND purchase.user_id IS NOT NULL)
+   
+   SELECT purchase_color, COUNT (user_id)
+   FROM black
+   GROUP BY purchase_color
+   ORDER BY 2 DESC;
+      	
+   
+   WITH black AS (
+  SELECT quiz.user_id, 
+   	quiz.color AS 'quiz_color',
+   	purchase.color AS 'purchase_color'
+    FROM quiz
+   LEFT JOIN purchase
+   ON quiz.user_id = purchase.user_id
+   	WHERE quiz.color IS 'Black'
+   	AND purchase.user_id IS NOT NULL)
+   
+   SELECT  COUNT (user_id) AS 'Tortoise'
+   FROM black
+   WHERE purchase_color LIKE '%Tortoise%';
